@@ -11,7 +11,7 @@ const SignUp = () => {
         e.preventDefault();
 
         try {
-            const response = await fetch("http://100.71.100.5:8000/front_to_back_sender.php", {
+            const response = await fetch("/front_to_back_sender.php", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

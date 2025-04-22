@@ -4,16 +4,20 @@ require_once __DIR__ . '/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
+
 $RABBITMQ_HOST = "100.107.33.60";
 $RABBITMQ_PORT = 5673;
 $RABBITMQ_USER = "admin";
 $RABBITMQ_PASS = "admin";
 $RABBITMQ_QUEUE = "frontend_to_backend";
 
-$DB_HOST = "10.0.10.169";
+
+$DB_HOSTS = ['100.82.47.115', '100.82.166.82', '100.107.33.60', '127.0.0.1'];
+$DB_PORT = 3306;
 $DB_NAME = "real_estate";
 $DB_USER = "root";
 $DB_PASS = "admin";
+$DB_TIMEOUT = 3; 
 
 try {
     echo "🔄 Connecting to RabbitMQ...\n";
@@ -22,7 +26,7 @@ try {
     $channel->queue_declare($RABBITMQ_QUEUE, false, true, false, false);
     echo "✅ Waiting for messages on queue: $RABBITMQ_QUEUE\n";
 
-    $callback = function ($msg) use ($DB_HOST, $DB_NAME, $DB_USER, $DB_PASS) {
+    $callback = function ($msg) use ($DB_HOSTS, $DB_PORT, $DB_NAME, $DB_USER, $DB_PASS, $DB_TIMEOUT) {
         echo "📩 Received message: {$msg->body}\n";
 
         $data = json_decode($msg->body, true);
@@ -41,11 +45,31 @@ try {
         }
 
         try {
-            $pdo = new PDO("mysql:host=$DB_HOST;dbname=$DB_NAME;charset=utf8", $DB_USER, $DB_PASS, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            ]);
-            echo "✅ Connected to MySQL\n";
+            $pdo = null;
+            foreach ($DB_HOSTS as $host) {
+                echo "🔌 Attempting to connect to $host:$DB_PORT...\n";
+                
+                try {
+                    $options = [
+                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                        PDO::ATTR_TIMEOUT => $DB_TIMEOUT
+                    ];
+                    
+                    $pdo = new PDO("mysql:host=$host;port=$DB_PORT;dbname=$DB_NAME;charset=utf8", 
+                                   $DB_USER, $DB_PASS, $options);
+                    
+                    echo "✅ Connected to MySQL on $host\n";
+                    break;
+                } catch (PDOException $e) {
+                    echo "❌ Failed to connect to $host: " . $e->getMessage() . "\n";
+                    $pdo = null;
+                }
+            }
+            
+            if (!$pdo) {
+                throw new Exception("❌ All DB nodes failed. Cannot process request.");
+            }
 
             if ($data['action'] === 'signup') {
                 $name = $data['name'] ?? ($data['username'] ?? '');
@@ -98,8 +122,19 @@ try {
                 echo "📤 Replied to $replyTo with correlation_id $corrId\n";
             }
 
-        } catch (PDOException $e) {
-            echo "❌ MySQL Error: " . $e->getMessage() . "\n";
+        } catch (Exception $e) {
+            echo "❌ Error: " . $e->getMessage() . "\n";
+            // Send error response if we have reply info
+            if ($replyTo && $corrId) {
+                $errorResponse = [
+                    "status" => "error",
+                    "message" => "Server error: " . $e->getMessage()
+                ];
+                $replyMsg = new AMQPMessage(json_encode($errorResponse), [
+                    'correlation_id' => $corrId
+                ]);
+                $channel->basic_publish($replyMsg, '', $replyTo);
+            }
         }
     };
 
@@ -113,5 +148,5 @@ try {
     $connection->close();
 
 } catch (Exception $e) {
-    echo "" . $e->getMessage() . "\n";
+    echo "❌ Fatal error: " . $e->getMessage() . "\n";
 }

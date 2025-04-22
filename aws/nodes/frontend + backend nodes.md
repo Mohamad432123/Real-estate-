@@ -1,6 +1,6 @@
 # Frontend and Backend Failover Configuration Guide
 
-This guide provides detailed instructions for setting up the frontend and backend components within our clustered failover system architecture. The implementation uses Python scripts, Ansible playbooks, and RabbitMQ integration to ensure high availability through a round-robin service activation approach.
+This guide provides detailed instructions for setting up the frontend and backend components within our clustered failover system architecture. The implementation uses Nginx configurations to ensure high availability through proper request routing.
 
 ## Architecture Overview
 
@@ -9,15 +9,37 @@ This guide provides detailed instructions for setting up the frontend and backen
 - **Messaging VM (100.107.33.60)**: Primary RabbitMQ server, also serves as backup for frontend/backend
 - **Database VM (100.82.47.115)**: Primary MySQL server, also serves as backup for backend
 
-The architecture supports:
-- Any service can be activated on any VM when needed
-- Automatic failover when a service fails
-- Automatic failback when a primary service recovers
-- Round-robin service activation for load balancing
-
 ## Frontend Configuration (100.71.100.5)
 
-### 1. Nginx Configuration for React Application
+### 1. Update React Code to Use Relative URLs
+
+Before proceeding with the Nginx configuration, update the React code to use relative URLs instead of hardcoded IP addresses:
+
+1. In `demo/src/pages/SignUp.js`, change:
+```javascript
+const response = await fetch("http://100.71.100.5:8000/front_to_back_sender.php", {
+```
+to:
+```javascript
+const response = await fetch("/front_to_back_sender.php", {
+```
+
+2. Similarly, in `demo/src/pages/Login.js`, change:
+```javascript
+const response = await fetch("http://100.71.100.5:8000/front_to_back_sender.php", {
+```
+to:
+```javascript
+const response = await fetch("/front_to_back_sender.php", {
+```
+
+3. Rebuild the React application:
+```bash
+cd ~/Downloads/Capstone-Group-01/demo
+npm run build
+```
+
+### 2. Nginx Configuration for React Application
 
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
@@ -39,7 +61,7 @@ Add the following configuration:
 
 ```bash
 server {
-    listen 8079;
+    listen 8079; 
     root /home/gcato/Downloads/Capstone-Group-01/demo/build;  # Full path to your React build directory
     index index.html;
 
@@ -173,6 +195,16 @@ server {
     # Node.js application
     location /api/ {
         proxy_pass http://localhost:8081/;  # Node.js backend port
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+    
+    # Add this location block to handle authentication requests when frontend is on backend VM
+    location = /front_to_back_sender.php {
+        proxy_pass http://localhost:8000/front_to_back_sender.php;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -445,6 +477,16 @@ server {
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
     }
+    
+    # Add this location block to handle authentication requests when backend is on frontend VM
+    location = /front_to_back_sender.php {
+        proxy_pass http://localhost:8000/front_to_back_sender.php;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
 }
 ```
 
@@ -526,6 +568,16 @@ server {
     # Proxy requests to PHP server
     location /api/ {
         proxy_pass http://localhost:8000/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Add this new location block specifically for front_to_back_sender.php
+    location = /front_to_back_sender.php {
+        proxy_pass http://localhost:8000/front_to_back_sender.php;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -707,3 +759,27 @@ curl http://100.70.91.110:8079/health  # When frontend is active
 4. **Different Service Management**:
    - Frontend requires managing the PHP server service
    - Backend requires managing the Node.js application service
+
+## IP Mismatch Solution Explanation
+
+The changes implemented in this guide address the potential IP mismatch issue that could occur during failover scenarios. Here's how the solution works:
+
+### Problem:
+- Previously, the React code in SignUp.js and Login.js had hardcoded IP addresses (http://100.71.100.5:8000/front_to_back_sender.php)
+- During failover, if the frontend was running on the backend VM (100.70.91.110), these hardcoded requests would still try to reach the original frontend VM (100.71.100.5), which might be down
+
+### Solution:
+1. **Use Relative URLs in React Code**:
+   - Changed fetch URLs from absolute (http://100.71.100.5:8000/front_to_back_sender.php) to relative (/front_to_back_sender.php)
+   - This makes the React app send requests to whatever server is currently hosting it
+
+2. **Configure Nginx on Both VMs to Handle Authentication Requests**:
+   - Added a location block for /front_to_back_sender.php in both frontend and backend Nginx configurations
+   - Each configuration proxies the request to the local PHP server running on port 8000
+   - This ensures authentication requests are properly handled regardless of which VM is hosting the frontend
+
+3. **Ensure PHP Server is Available on Both VMs**:
+   - Both VMs have the PHP server service configured to run on port 8000
+   - The service is started during failover to handle authentication requests
+
+This approach maintains your original architecture while making the frontend code portable between VMs. The key insight is that by using relative URLs, the browser automatically sends requests to the current host, and Nginx routes them to the appropriate local service.
