@@ -18,7 +18,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // Configuration
 $RABBITMQ_HOST = "100.107.33.60";  // RabbitMQ server
+<<<<<<< HEAD
 $RABBITMQ_PORT = 5673;
+=======
+$RABBITMQ_PORT = 5672;
+>>>>>>> fd44be974fb1176d27d5daabba8d6ed0933b76c9
 $RABBITMQ_USER = "admin";
 $RABBITMQ_PASS = "admin";
 $MAPS_REQUEST_QUEUE = "maps_requests";

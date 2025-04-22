@@ -14,8 +14,12 @@ app.use(express.json());
 
 const allowedOrigins = [
     "http://10.0.8.49:7012",
+<<<<<<< HEAD
     "http://localhost:7012",  // Keep for local development
     "http://100.71.100.5:7012"
+=======
+    "http://localhost:7012"  // Keep for local development
+>>>>>>> fd44be974fb1176d27d5daabba8d6ed0933b76c9
 ];
 
 app.use(cors({
