@@ -33,15 +33,11 @@ class ApiClient {
         return nodeResponse.data;
       } catch (fallbackError) {
         console.error(`Fallback error in maps request (${action}):`, fallbackError);
-<<<<<<< HEAD
         return {
           status: 'error',
           message: `Service unavailable: ${fallbackError.message || 'Unknown error'}`,
           code: fallbackError.response?.status || 500
         };
-=======
-        throw fallbackError;
->>>>>>> fd44be974fb1176d27d5daabba8d6ed0933b76c9
       }
     }
   }
@@ -100,15 +96,11 @@ class ApiClient {
         return nodeResponse.data;
       } catch (fallbackError) {
         console.error(`Fallback error in rentcast request (${action}):`, fallbackError);
-<<<<<<< HEAD
         return {
           status: 'error',
           message: `Service unavailable: ${fallbackError.message || 'Unknown error'}`,
           code: fallbackError.response?.status || 500
         };
-=======
-        throw fallbackError;
->>>>>>> fd44be974fb1176d27d5daabba8d6ed0933b76c9
       }
     }
   }
@@ -121,15 +113,12 @@ class ApiClient {
    * @returns {Promise} - The geocoded result
    */
   static async geocodeAddress(address) {
-<<<<<<< HEAD
     if (!address) {
       return {
         status: 'error',
         message: 'Address is required'
       };
     }
-=======
->>>>>>> fd44be974fb1176d27d5daabba8d6ed0933b76c9
     return this.mapsRequest('geocode', { address });
   }
 
@@ -142,15 +131,12 @@ class ApiClient {
    * @returns {Promise} - The Street View URL
    */
   static async getStreetViewUrl(latitude, longitude, size = '600x300', fov = 90) {
-<<<<<<< HEAD
     if (!latitude || !longitude) {
       return {
         status: 'error',
         message: 'Latitude and longitude are required'
       };
     }
-=======
->>>>>>> fd44be974fb1176d27d5daabba8d6ed0933b76c9
     return this.mapsRequest('streetView', { latitude, longitude, size, fov });
   }
 
@@ -162,15 +148,12 @@ class ApiClient {
    * @returns {Promise} - The places search result
    */
   static async searchPlaces(query, location = null, radius = 5000) {
-<<<<<<< HEAD
     if (!query) {
       return {
         status: 'error',
         message: 'Query is required'
       };
     }
-=======
->>>>>>> fd44be974fb1176d27d5daabba8d6ed0933b76c9
     return this.mapsRequest('places', { query, location, radius });
   }
 
@@ -182,15 +165,12 @@ class ApiClient {
    * @returns {Promise} - The directions result
    */
   static async getDirections(origin, destination, mode = 'driving') {
-<<<<<<< HEAD
     if (!origin || !destination) {
       return {
         status: 'error',
         message: 'Origin and destination are required'
       };
     }
-=======
->>>>>>> fd44be974fb1176d27d5daabba8d6ed0933b76c9
     return this.mapsRequest('directions', { origin, destination, mode });
   }
   
@@ -202,15 +182,12 @@ class ApiClient {
    * @returns {Promise} - The property search results
    */
   static async searchProperties(params) {
-<<<<<<< HEAD
     if (!params) {
       return {
         status: 'error',
         message: 'Search parameters are required'
       };
     }
-=======
->>>>>>> fd44be974fb1176d27d5daabba8d6ed0933b76c9
     return this.rentcastRequest('searchProperties', params);
   }
   
@@ -220,15 +197,12 @@ class ApiClient {
    * @returns {Promise} - The property details
    */
   static async getPropertyDetails(propertyId) {
-<<<<<<< HEAD
     if (!propertyId) {
       return {
         status: 'error',
         message: 'Property ID is required'
       };
     }
-=======
->>>>>>> fd44be974fb1176d27d5daabba8d6ed0933b76c9
     return this.rentcastRequest('getPropertyDetails', { propertyId });
   }
   
@@ -238,15 +212,12 @@ class ApiClient {
    * @returns {Promise} - The rental estimate
    */
   static async getRentalEstimate(params) {
-<<<<<<< HEAD
     if (!params || !params.address) {
       return {
         status: 'error',
         message: 'Property address is required'
       };
     }
-=======
->>>>>>> fd44be974fb1176d27d5daabba8d6ed0933b76c9
     return this.rentcastRequest('getRentalEstimate', params);
   }
   
@@ -256,15 +227,12 @@ class ApiClient {
    * @returns {Promise} - The market data
    */
   static async getMarketData(params) {
-<<<<<<< HEAD
     if (!params || (!params.zipCode && (!params.city || !params.state))) {
       return {
         status: 'error',
         message: 'Either zipCode or city and state are required'
       };
     }
-=======
->>>>>>> fd44be974fb1176d27d5daabba8d6ed0933b76c9
     return this.rentcastRequest('getMarketData', params);
   }
 
@@ -274,7 +242,6 @@ class ApiClient {
    * @returns {Promise} - The signup result
    */
   static async signup(userData) {
-<<<<<<< HEAD
     if (!userData || !userData.name || !userData.email || !userData.password) {
       return {
         status: 'error',
@@ -322,17 +289,6 @@ class ApiClient {
         status: 'error',
         message: `Signup error: ${error.message || 'Unknown error'}`
       };
-=======
-    try {
-      const response = await axios.post(`${PHP_API_URL}/front_to_back_sender.php`, {
-        action: 'signup',
-        ...userData
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Signup error:', error);
-      throw error;
->>>>>>> fd44be974fb1176d27d5daabba8d6ed0933b76c9
     }
   }
 
@@ -342,7 +298,6 @@ class ApiClient {
    * @returns {Promise} - The login result
    */
   static async login(credentials) {
-<<<<<<< HEAD
     if (!credentials || !credentials.email || !credentials.password) {
       return {
         status: 'error',
@@ -390,17 +345,6 @@ class ApiClient {
         status: 'error',
         message: `Login error: ${error.message || 'Unknown error'}`
       };
-=======
-    try {
-      const response = await axios.post(`${PHP_API_URL}/front_to_back_sender.php`, {
-        action: 'login',
-        ...credentials
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
->>>>>>> fd44be974fb1176d27d5daabba8d6ed0933b76c9
     }
   }
 }

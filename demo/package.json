@@ -4,6 +4,8 @@
   "private": true,
   "dependencies": {
     "@react-google-maps/api": "^2.20.6",
+    "@splinetool/react-spline": "^4.0.0",
+    "@splinetool/runtime": "^1.9.87",
     "axios": "^1.8.1",
     "cra-template": "1.2.0",
     "react": "^19.0.0",

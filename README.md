@@ -22,9 +22,13 @@
 <a href="https://tailscale.com/" target="_blank">
   <img src="https://img.shields.io/badge/Tailscale-00A9E0?style=for-the-badge&logo=tailscale&logoColor=white" />
 </a>
-<a href="https://www.ansible.com/" target="_blank">
-  <img src="https://img.shields.io/badge/Ansible-002D4D?style=for-the-badge&logo=ansible&logoColor=white" />
-</a>
+
+<!-- 
+<a href="http://www.haproxy.org/" target="_blank">
+  <> <img src="https://img.shields.io/badge/HAProxy-LoadBalancer-007EC6?style=for-the-badge" />
+  <> </a>
+-->
+
 <a href="https://www.nginx.com/" target="_blank">
   <img src="https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white" />
 </a>
@@ -66,9 +70,9 @@ InvestorIQ is a full-stack real estate investment analysis platform designed to 
 
 The project includes 4 key components:
 
-1. **Frontend** – User interface with property input & data visualization  
-2. **Backend** – API endpoints, data validation, business logic  
-3. **Database** – Stores user inputs, search history, and property metrics  
-4. **RabbitMQ** – Handles asynchronous communication between services  
+1. **Frontend** – User interface with property input & data visualization. Includes a custom load distribution system that evenly routes incoming traffic across multiple frontend nodes, enhancing fault tolerance.
+2. **Backend** – API endpoints, data validation, business logic. Incoming traffic is automatically balanced across multiple nodes, ensuring scalability and high availability.
+3. **Database** – Stores user inputs, search history, and property metrics. Operates in a synchronized, multi-node replication system that supports read/write from any node, ensuring consistency.
+4. **RabbitMQ** – Handles asynchronous communication between services. Built to resist network partitions, the cluster automatically resolves failures, maintaining service uptime.
 
 

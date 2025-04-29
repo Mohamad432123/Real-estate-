@@ -1,23 +1,23 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import SplineBackground from "../components/SplineBackground";
 import "./Auth.css";
 
 const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
+    const [messageType, setMessageType] = useState(""); // "success" or "error"
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
-    const attemptLogin = async (retryCount = 0) => {
-        if (retryCount > 2) {
-            setMessage("Login failed after multiple attempts.");
-            setIsLoading(false);
-            return;
-        }
-
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setMessage("");
+        setMessageType("");
+        setIsLoading(true);
+        
         try {
-            setIsLoading(true);
             const response = await fetch("/front_to_back_sender.php", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -28,43 +28,54 @@ const Login = () => {
                 }),
             });
 
-            await new Promise(resolve => setTimeout(resolve, 250 * (retryCount + 1)));
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
 
             const data = await response.json();
 
             if (data.status === "success") {
-                setMessage("Welcome back!");
+                setMessageType("success");
+                setMessage("Login successful! Redirecting to search page...");
+                
+                // Store user data in localStorage
+                localStorage.setItem("user", JSON.stringify(data.user));
+                
+                // Redirect to search page after a short delay
                 setTimeout(() => navigate("/search"), 1500);
             } else {
-                if (retryCount < 2) {
-                    console.log(`Login attempt ${retryCount + 1} failed. Retrying...`);
-                    await attemptLogin(retryCount + 1);
+                setMessageType("error");
+                
+                // Provide specific error messages based on the server response
+                if (data.message && data.message.includes("Invalid credentials")) {
+                    setMessage("Invalid email or password. Please try again.");
+                } else if (data.message && data.message.includes("not found")) {
+                    setMessage("Email not registered. Please check your email or sign up for an account.");
                 } else {
-                    setMessage(`Login failed: ${data.message}`);
+                    setMessage(data.message || "Login failed. Please try again.");
                 }
             }
-        } catch (err) {
-            console.error("Login error:", err);
-
-            if (retryCount < 2) {
-                console.log(`Network error. Retry attempt ${retryCount + 1}`);
-                await attemptLogin(retryCount + 1);
+        } catch (error) {
+            console.error("Login error:", error);
+            setMessageType("error");
+            
+            if (error.name === "TypeError" && error.message.includes("NetworkError")) {
+                setMessage("Network error. Please check your connection and try again.");
+            } else if (error.name === "SyntaxError") {
+                setMessage("Server returned invalid data. Please try again later.");
             } else {
-                setMessage("Network error. Please try again.");
+                setMessage(`Error: ${error.message || "Something went wrong. Please try again."}`);
             }
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        await attemptLogin();
-    };
-
     return (
         <div className="auth-container">
-            <h2>Login</h2>
+            <SplineBackground 
+                sceneUrl="https://prod.spline.design/AlMO0fHr7OoFL8Pz/scene.splinecode"
+            />
             <form onSubmit={handleSubmit}>
                 <input
                     type="email"
@@ -86,7 +97,19 @@ const Login = () => {
                     {isLoading ? "Logging in..." : "Login"}
                 </button>
             </form>
-            {message && <p>{message}</p>}
+            {message && (
+                <div className={`message ${messageType}`}>
+                    {message}
+                </div>
+            )}
+            <div className="auth-links">
+                <p>
+                    Don't have an account? <a href="/signup">Sign Up</a>
+                </p>
+                <p>
+                    <a href="/forgot-password">Forgot Password?</a>
+                </p>
+            </div>
         </div>
     );
 };

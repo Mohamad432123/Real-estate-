@@ -8,7 +8,7 @@ const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
 // RabbitMQ configuration - hardcoded as requested
 const RABBITMQ_HOST = "100.107.33.60";  // RabbitMQ server
-const RABBITMQ_PORT = 5672;
+const RABBITMQ_PORT = 5673;
 const RABBITMQ_USER = "admin";
 const RABBITMQ_PASS = "admin";
 const RABBITMQ_URL = `amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@${RABBITMQ_HOST}:${RABBITMQ_PORT}`;

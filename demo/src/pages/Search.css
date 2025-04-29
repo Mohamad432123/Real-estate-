@@ -30,7 +30,7 @@ html, body {
 }
 
 .search-container {
-  background-color: #111111;
+  background-color: rgba(10, 10, 10, 0.7);
   flex-direction: column;
   align-items: center;
   padding: 5px;
@@ -40,15 +40,25 @@ html, body {
   z-index: 2;
 }
 
+.search-header {
+  width: 100%;
+  border-bottom: 2px solid rgba(0, 195, 255, 0.5);
+  padding-bottom: 15px;
+  position: relative;
+  overflow: hidden;
+  z-index: 2;
+}
+
 .search-container h1 {
   width: 100%;
   text-align: center;
-  background-color: #111111;
   padding: 15px 0;
   font-size: 1.8rem;
-  border-bottom: 2px solid #888888;
-  color: #eeeeee;
-  text-shadow: 0 0 10px #ffffff;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(0, 195, 255, 0.8), 0 0 20px rgba(0, 195, 255, 0.5);
+  margin-bottom: 5px;
+  position: relative;
+  z-index: 2;
 }
 
 .search-form {
@@ -57,29 +67,63 @@ html, body {
   flex-wrap: wrap;
   justify-content: center;
   gap: 10px;
-  padding: 15px;
+  padding: 0 15px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.search-container .spline-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
 }
 
 .search-form input {
   flex: 1 1 calc(33% - 10px);
   min-width: 150px;
-  background: #1a1a1a;
-  border: 1px solid #888888;
+  background: transparent;
+  border: 1px solid rgba(0, 195, 255, 0.5);
   border-radius: 5px;
-  color: #d0d0d0;
+  color: white;
   padding: 10px;
   outline: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 5px rgba(0, 195, 255, 0.3);
+}
+
+.search-form input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.search-form input:focus {
+  border-color: rgba(0, 195, 255, 0.8);
+  box-shadow: 0 0 10px rgba(0, 195, 255, 0.5);
 }
 
 .search-form button {
   flex: 1 1 100%;
-  background-color: #888888;
-  border: none;
+  background-color: rgba(0, 195, 255, 0.2);
+  border: 1px solid rgba(0, 195, 255, 0.5);
   border-radius: 5px;
-  color: black;
+  color: white;
   cursor: pointer;
   padding: 10px 20px;
   font-size: 1rem;
+  font-weight: bold;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 10px rgba(0, 195, 255, 0.3);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+.search-form button:hover {
+  background-color: rgba(0, 195, 255, 0.4);
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(0, 195, 255, 0.6);
 }
 
 .property-list {
@@ -90,13 +134,16 @@ html, body {
   width: 100%;
   flex-grow: 1;
   overflow-y: auto;
+  position: relative;
+  z-index: 3;
+  background-color: rgba(10, 10, 10, 0.5);
 }
 
 .property-card {
   display: flex;
-  background-color: #1a1a1a;
+  background-color: rgba(26, 26, 26, 0.7);
   padding: 10px;
-  border: 1px solid #888888;
+  border: 1px solid rgba(0, 195, 255, 0.3);
   border-radius: 5px;
   width: 90%;
   max-width: 600px;
@@ -104,16 +151,20 @@ html, body {
   gap: 10px;
   align-items: center;
   transition: transform 0.2s ease-in-out, box-shadow 0.3s ease-in-out;
+  backdrop-filter: blur(5px);
+  position: relative;
+  z-index: 3;
 }
 
 .property-card:hover {
-  box-shadow: 0px 0px 20px 5px rgba(255, 255, 255, 0.8);
+  box-shadow: 0px 0px 20px 5px rgba(0, 195, 255, 0.4);
   transform: scale(1.05);
   cursor: pointer;
+  border-color: rgba(0, 195, 255, 0.6);
 }
 
 .property-card:active {
-  box-shadow: 0px 0px 30px 10px rgba(255, 255, 255, 1);
+  box-shadow: 0px 0px 30px 10px rgba(0, 195, 255, 0.7);
 }
 
 .property-image-container {

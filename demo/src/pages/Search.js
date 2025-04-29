@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 import ApiClient from "../services/apiClient";
+import SplineBackground from "../components/SplineBackground";
 import "./Search.css";
 
 // No API keys needed - they're managed by the backend
@@ -161,20 +162,25 @@ const Search = () => {
   return (
     <div className="search-page">
       <div className="search-container">
-        <h1>Real Estate Search</h1>
-        <form onSubmit={handleSubmit} className="search-form">
-          {Object.keys(formData).map((field) => (
-            <input
-              key={field}
-              type={field.includes("bed") || field.includes("bath") ? "number" : "text"}
-              name={field}
-              placeholder={field.replace(/([A-Z])/g, " $1").trim()}
-              value={formData[field]}
-              onChange={handleChange}
-            />
-          ))}
-          <button type="submit">Search</button>
-        </form>
+        <SplineBackground 
+          sceneUrl="https://prod.spline.design/NSVcsdfW1SF9VkBv/scene.splinecode"
+        />
+        <div className="search-header">
+          <h1>Real Estate Search</h1>
+          <form onSubmit={handleSubmit} className="search-form">
+            {Object.keys(formData).map((field) => (
+              <input
+                key={field}
+                type={field.includes("bed") || field.includes("bath") ? "number" : "text"}
+                name={field}
+                placeholder={field.replace(/([A-Z])/g, " $1").trim()}
+                value={formData[field]}
+                onChange={handleChange}
+              />
+            ))}
+            <button type="submit">Search</button>
+          </form>
+        </div>
 
         <div className="property-list">
           {loading && <p className="loading">Loading properties...</p>}

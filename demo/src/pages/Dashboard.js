@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import SplineBackground from "../components/SplineBackground";
 import "./Dashboard.css";
 
 const Dashboard = () => {
@@ -27,10 +28,16 @@ const Dashboard = () => {
         <button onClick={handleProfile}>Profile</button>
         <button onClick={handleLogout}>Logout</button>
       </div>
-      <div className="saved-properties-container">
-        <h2>Saved Properties</h2>
-        <p>Your saved properties will appear here.</p>
-        {/* Container for saved properties that will be loaded later */}
+      <div className="dashboard-content">
+        <SplineBackground 
+          sceneUrl="https://prod.spline.design/fGBql0rKC4FbKSAq/scene.splinecode"
+          className="dashboard-spline"
+        />
+        <div className="saved-properties-container">
+          <h2>Saved Properties</h2>
+          <p>Your saved properties will appear here.</p>
+          {/* Container for saved properties that will be loaded later */}
+        </div>
       </div>
     </div>
   );
