@@ -1,0 +1,65 @@
+.landing-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: #d0d0d0;
+  text-align: center;
+  overflow: hidden;
+}
+  
+  .landing-header {
+    position: relative;
+    z-index: 1; /* Place above the Spline background */
+    max-width: 600px;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background for better readability */
+    border-radius: 10px;
+  }
+  
+  .landing-header h1 {
+    font-size: 2.5rem;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+    color: #ffffff;
+  }
+  
+  .landing-header p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+    color: #ffffff;
+  }
+  
+  .cta-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+  }
+  
+  .btn {
+    padding: 10px 20px;
+    text-decoration: none;
+    background: #888888;
+    color: black;
+    border-radius: 5px;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .btn:hover {
+    background: #ffffff;
+    box-shadow: 0px 0px 15px #ffffff;
+    transform: scale(1.05);
+  }
+  
+  .btn-secondary {
+    background: transparent;
+    border: 2px solid #aaaaaa;
+    color: #ffffff;
+  }
+  
+  .btn-secondary:hover {
+    background: #aaaaaa;
+    color: black;
+    box-shadow: 0px 0px 15px #aaaaaa;
+  }
