@@ -3,7 +3,7 @@
 
 
 
-![Build Status](https://img.shields.io/badge/build-in%20progress-yellow)  
+![Build Status](https://img.shields.io/badge/build-completed-brightgreen)
 
 ## Tech Stack
 <a href="https://react.dev/" target="_blank">
@@ -22,13 +22,12 @@
 <a href="https://tailscale.com/" target="_blank">
   <img src="https://img.shields.io/badge/Tailscale-00A9E0?style=for-the-badge&logo=tailscale&logoColor=white" />
 </a>
-
-<!-- 
 <a href="http://www.haproxy.org/" target="_blank">
-  <> <img src="https://img.shields.io/badge/HAProxy-LoadBalancer-007EC6?style=for-the-badge" />
-  <> </a>
--->
-
+<img src="https://img.shields.io/badge/HAProxy-LoadBalancer-007EC6?style=for-the-badge" />
+</a>
+<a href="https://grafana.com/" target="_blank">
+  <img src="https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white" />
+</a>
 <a href="https://www.nginx.com/" target="_blank">
   <img src="https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white" />
 </a>
@@ -41,6 +40,9 @@
 </a>
 <a href="https://www.gnu.org/software/bash/" target="_blank">
   <img src="https://img.shields.io/badge/Shell_Scripts-4EAA25?style=for-the-badge&logo=gnu-bash&logoColor=white" />
+</a>
+<a href="https://spline.design/" target="_blank">
+  <img src="https://img.shields.io/badge/Spline%20Design-1E1E1E?style=for-the-badge&logoColor=white&labelColor=1E1E1E" />
 </a>
 
 

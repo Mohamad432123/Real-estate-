@@ -1,4 +1,8 @@
 import React, { useState } from "react";
+import axios from "axios";
+
+// Use the same API URL structure as other components
+const API_URL = "http://100.71.100.5:8000/front_to_back_sender.php";
 
 const SignUp = () => {
     const [name, setName] = useState("");
@@ -11,38 +15,25 @@ const SignUp = () => {
         try {
             console.log("Submitting signup with:", { name, email, password });
 
-            const response = await fetch("/front_to_back_sender.php", { 
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    action: "signup",
-                    username: name,
-                    email: email,
-                    password: password,
-                }),
+            // Using axios like in other components
+            const response = await axios.post(API_URL, {
+                action: "signup",
+                username: name,
+                email: email,
+                password: password
             });
 
             console.log("Response status:", response.status);
-            console.log("Response headers:", Object.fromEntries(response.headers.entries()));
+            console.log("Response headers:", response.headers);
 
-            // Try to get response text before parsing JSON
-            const responseText = await response.text();
-            console.log("Raw response text:", responseText);
+            // Axios automatically parses JSON
+            const data = response.data;
+            console.log("Response data:", data);
 
-            try {
-                const data = JSON.parse(responseText);
-                console.log("Parsed response data:", data);
-
-                if (data.message && data.message.includes("sent successfully")) {
-                    setMessage("✅ You are all set, please login to your account");
-                } else {
-                    setMessage(`❌ Signup failed: ${data.message}`);
-                }
-            } catch (jsonError) {
-                console.error("JSON Parsing Error:", jsonError);
-                setMessage(`❌ Error parsing server response: ${responseText}`);
+            if (data.message && data.message.includes("sent successfully")) {
+                setMessage("✅ You are all set, please login to your account");
+            } else {
+                setMessage(`❌ Signup failed: ${data.message}`);
             }
         } catch (error) {
             console.error("Complete Signup Error:", error);

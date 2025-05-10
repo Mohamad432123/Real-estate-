@@ -1,251 +1,116 @@
-// backend/services/rentcast-service.js
-const axios = require('axios');
 const amqp = require('amqplib');
-const config = require('../config');
+const axios = require('axios');
 
-// Get configuration from config service
-const rabbitConfig = config.getRabbitMQConfig();
-const apiKeys = config.getApiKeys();
-const RENTCAST_API_KEY = apiKeys.rentcast_key;
+// === 🔒 Hardcoded API Key & RabbitMQ Config ===
+const RENTCAST_API_KEY = "3d587c5223604e4b874588109b9aea47";
 
-// RabbitMQ configuration from config service
-const RABBITMQ_HOST = rabbitConfig.host;
-const RABBITMQ_PORT = rabbitConfig.port;
-const RABBITMQ_USER = rabbitConfig.user;
-const RABBITMQ_PASS = rabbitConfig.pass;
-const RABBITMQ_URL = `amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@${RABBITMQ_HOST}:${RABBITMQ_PORT}`;
-const RENTCAST_REQUEST_QUEUE = rabbitConfig.rentcast_request_queue;
-const RENTCAST_RESPONSE_QUEUE = rabbitConfig.rentcast_response_queue;
+const RABBITMQ_HOST = "100.107.33.60";
+const RABBITMQ_PORT = 5673;
+const RABBITMQ_USER = "admin";
+const RABBITMQ_PASS = "admin";
 
-// Connect to RabbitMQ and start consuming messages
-async function startRentcastService() {
-    console.log('🏠 Starting RentCast Service...');
-    
-    try {
-        // Connect to RabbitMQ
-        console.log(`🔄 RentCast Service: Connecting to RabbitMQ at ${RABBITMQ_URL}...`);
-        const connection = await amqp.connect(RABBITMQ_URL);
-        const channel = await connection.createChannel();
-        
-        // Ensure queues exist
-        await channel.assertQueue(RENTCAST_REQUEST_QUEUE, { durable: true });
-        await channel.assertQueue(RENTCAST_RESPONSE_QUEUE, { durable: true });
-        
-        console.log(`✅ RentCast Service: Connected to RabbitMQ. Waiting for rentcast requests...`);
-        
-        // Process rentcast requests
-        channel.consume(RENTCAST_REQUEST_QUEUE, async (msg) => {
-            if (!msg) return;
-            
-            try {
-                const request = JSON.parse(msg.content.toString());
-                console.log(`📩 RentCast Service: Received rentcast request:`, request);
-                
-                const { action, params, correlationId } = request;
-                let response = { error: 'Unknown action' };
-                
-                // Process different RentCast API requests
-                switch (action) {
-                    case 'searchProperties':
-                        response = await handlePropertySearch(params);
-                        break;
-                    case 'getPropertyDetails':
-                        response = await handlePropertyDetails(params);
-                        break;
-                    case 'getRentalEstimate':
-                        response = await handleRentalEstimate(params);
-                        break;
-                    case 'getMarketData':
-                        response = await handleMarketData(params);
-                        break;
-                    default:
-                        console.error(`❌ RentCast Service: Unknown action: ${action}`);
-                }
-                
-                // Send response back
-                channel.sendToQueue(
-                    RENTCAST_RESPONSE_QUEUE,
-                    Buffer.from(JSON.stringify({ 
-                        ...response,
-                        correlationId 
-                    })),
-                    { persistent: true }
-                );
-                
-                console.log(`📤 RentCast Service: Sent response for correlationId: ${correlationId}`);
-                channel.ack(msg);
-                
-            } catch (error) {
-                console.error(`❌ RentCast Service: Error processing rentcast request:`, error);
-                channel.nack(msg, false, false); // Don't requeue the message if it's invalid
-            }
-        });
-        
-        // Handle connection close
-        process.once('SIGINT', async () => {
-            console.log('🛑 RentCast Service: Closing RabbitMQ connection...');
-            await channel.close();
-            await connection.close();
-            process.exit(0);
-        });
-        
-    } catch (error) {
-        console.error(`❌ RentCast Service: Error:`, error);
-        setTimeout(startRentcastService, 5000); // Retry connection after 5 seconds
-    }
-}
+const RENTCAST_REQUEST_QUEUE = "rentcast_requests";
+const RENTCAST_RESPONSE_QUEUE = "rentcast_responses";
 
-// Handler functions for different RentCast operations
-async function handlePropertySearch(params) {
-    try {
-        // Construct query parameters from the provided params
-        const queryParams = new URLSearchParams();
-        
-        Object.entries(params).forEach(([key, value]) => {
-            if (value) queryParams.append(key, value);
-        });
-        
-        const baseUrl = "https://api.rentcast.io/v1/properties";
-        const url = `${baseUrl}?${queryParams.toString()}`;
-        
-        const response = await axios.get(url, {
-            headers: {
-                "X-Api-Key": RENTCAST_API_KEY,
-                "Accept": "application/json"
-            }
-        });
-        
-        return {
-            status: 'success',
-            data: response.data
-        };
-    } catch (error) {
-        console.error(`❌ RentCast Service: Property search error:`, error);
-        return {
-            status: 'error',
-            message: error.message,
-            errorCode: error.response?.status || 500
-        };
-    }
-}
+const amqpUrl = `amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@${RABBITMQ_HOST}:${RABBITMQ_PORT}`;
 
-async function handlePropertyDetails(params) {
-    try {
-        const { propertyId } = params;
-        
-        if (!propertyId) {
-            return {
-                status: 'error',
-                message: 'Property ID is required'
-            };
+(async () => {
+  try {
+    console.log(`🔄 RentCast Service: Connecting to RabbitMQ at ${amqpUrl}...`);
+    const connection = await amqp.connect(amqpUrl);
+    const channel = await connection.createChannel();
+
+    await channel.assertQueue(RENTCAST_REQUEST_QUEUE, { durable: true });
+    await channel.assertQueue(RENTCAST_RESPONSE_QUEUE, { durable: true });
+
+    console.log("✅ RentCast Service: Connected to RabbitMQ. Waiting for rentcast requests...");
+
+    channel.consume(RENTCAST_REQUEST_QUEUE, async (msg) => {
+      const replyTo = msg.properties.replyTo;
+      const correlationId = msg.properties.correlationId;
+
+      const request = JSON.parse(msg.content.toString());
+      const { action, params: rawParams } = request;
+
+      // ✅ Clean out empty values
+      const params = {};
+      for (const key in rawParams) {
+        if (rawParams[key] !== "" && rawParams[key] !== null && rawParams[key] !== undefined) {
+          params[key] = rawParams[key];
         }
-        
-        const url = `https://api.rentcast.io/v1/properties/${propertyId}`;
-        
-        const response = await axios.get(url, {
-            headers: {
-                "X-Api-Key": RENTCAST_API_KEY,
-                "Accept": "application/json"
-            }
-        });
-        
-        return {
-            status: 'success',
-            data: response.data
-        };
-    } catch (error) {
-        console.error(`❌ RentCast Service: Property details error:`, error);
-        return {
-            status: 'error',
-            message: error.message,
-            errorCode: error.response?.status || 500
-        };
-    }
-}
+      }
 
-async function handleRentalEstimate(params) {
-    try {
-        const { address, bedrooms, bathrooms, propertyType, squareFootage } = params;
-        
-        if (!address) {
-            return {
-                status: 'error',
-                message: 'Address is required'
-            };
+      console.log("📩 RentCast Service: Received rentcast request:", { action, params });
+
+      let response = {
+        status: "error",
+        message: "Invalid action"
+      };
+
+      try {
+        switch (action) {
+          case "searchProperties":
+            if (!params.zipCode && !params.city && !params.state) {
+              throw new Error("zipCode or city/state is required");
+            }
+            response = await makeApiRequest("https://api.rentcast.io/v1/properties/search", params);
+            break;
+
+          case "getPropertyDetails":
+            if (!params.propertyId) throw new Error("propertyId is required");
+            response = await makeApiRequest(`https://api.rentcast.io/v1/properties/${params.propertyId}`);
+            break;
+
+          case "getRentalEstimate":
+            response = await makeApiRequest("https://api.rentcast.io/v1/rents/estimate", params, "POST");
+            break;
+
+          case "getMarketData":
+            response = await makeApiRequest("https://api.rentcast.io/v1/markets", params);
+            break;
+
+          default:
+            throw new Error("Unknown action");
         }
-        
-        const url = `https://api.rentcast.io/v1/rental-estimate`;
-        
-        const requestBody = {
-            address,
-            bedrooms,
-            bathrooms,
-            propertyType,
-            squareFootage
+      } catch (err) {
+        console.error("❌ RentCast Service Error:", err.message);
+        response = {
+          status: "error",
+          message: err.message
         };
-        
-        const response = await axios.post(url, requestBody, {
-            headers: {
-                "X-Api-Key": RENTCAST_API_KEY,
-                "Accept": "application/json",
-                "Content-Type": "application/json"
-            }
-        });
-        
-        return {
-            status: 'success',
-            data: response.data
-        };
-    } catch (error) {
-        console.error(`❌ RentCast Service: Rental estimate error:`, error);
-        return {
-            status: 'error',
-            message: error.message,
-            errorCode: error.response?.status || 500
-        };
+      }
+
+      response.correlationId = correlationId;
+
+      channel.sendToQueue(replyTo, Buffer.from(JSON.stringify(response)), {
+        correlationId: correlationId
+      });
+
+      console.log(`📤 RentCast Service: Sent response for correlationId: ${correlationId}`);
+    }, { noAck: true });
+
+  } catch (err) {
+    console.error("❌ RentCast Service Error:", err);
+  }
+})();
+
+async function makeApiRequest(url, params = {}, method = "GET") {
+  const options = {
+    method,
+    url,
+    headers: {
+      "X-Api-Key": RENTCAST_API_KEY,
+      "Content-Type": "application/json"
     }
+  };
+
+  if (method === "GET") {
+    const queryParams = new URLSearchParams(params).toString();
+    options.url += `?${queryParams}`;
+  } else {
+    options.data = params;
+  }
+
+  const res = await axios(options);
+  return { status: "success", data: res.data };
 }
-
-async function handleMarketData(params) {
-    try {
-        const { zipCode, city, state } = params;
-        
-        if (!zipCode && (!city || !state)) {
-            return {
-                status: 'error',
-                message: 'Either zipCode or city and state are required'
-            };
-        }
-        
-        const url = `https://api.rentcast.io/v1/market`;
-        
-        const queryParams = new URLSearchParams();
-        if (zipCode) queryParams.append('zipCode', zipCode);
-        if (city) queryParams.append('city', city);
-        if (state) queryParams.append('state', state);
-        
-        const response = await axios.get(`${url}?${queryParams.toString()}`, {
-            headers: {
-                "X-Api-Key": RENTCAST_API_KEY,
-                "Accept": "application/json"
-            }
-        });
-        
-        return {
-            status: 'success',
-            data: response.data
-        };
-    } catch (error) {
-        console.error(`❌ RentCast Service: Market data error:`, error);
-        return {
-            status: 'error',
-            message: error.message,
-            errorCode: error.response?.status || 500
-        };
-    }
-}
-
-// Start the service
-startRentcastService();
-
-module.exports = { startRentcastService };

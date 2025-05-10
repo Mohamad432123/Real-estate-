@@ -1,21 +1,16 @@
-// backend/server.js
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const { spawn } = require("child_process");
 const path = require("path");
 
-// Import controllers
-const mapsController = require('./api/maps-controller');
-const rentcastController = require('./api/rentcast-controller');
 
 const app = express();
 app.use(express.json());
 
 const allowedOrigins = [
-    "http://10.0.8.49:7012",
-    "http://localhost:7012",  // Keep for local development
-    "http://100.71.100.5:7012"
+    "http://10.0.8.49:8079",
+    "http://localhost:8079"  // Keep for local development
 ];
 
 app.use(cors({
@@ -25,8 +20,13 @@ app.use(cors({
 }));
 
 const PORT = process.env.PORT || 8081;
+
+// PHP worker scripts
 const FRONT_TO_BACK_RECEIVER = path.join(__dirname, "front_to_back_receiver.php");
 const DB_TO_BE_RECEIVER = path.join(__dirname, "db_to_be_receiver.php");
+const RENTCAST_RECEIVER = path.join(__dirname, "rentcast_receiver.php");
+const PROPERTY_MANAGER_RECEIVER = path.join(__dirname, "property_manager_receiver.php");
+
 
 // Start PHP background services
 function startPHPProcess(script, name) {
@@ -35,27 +35,23 @@ function startPHPProcess(script, name) {
 
     process.on("close", (code) => {
         console.error(`❌ ${name} exited with code ${code}`);
+        setTimeout(() => {
+            console.log(`🔄 Restarting ${name}...`);
+            startPHPProcess(script, name);
+        }, 5000);
     });
 
     return process;
 }
 
-// Start the services
+// Start maps and rentcast services
 function startServices() {
     console.log('🧩 Starting backend services...');
-    
-    // Start maps service
     require('./services/maps-service');
-    
-    // Start rentcast service
     require('./services/rentcast-service');
 }
 
-// Use the controllers for API endpoints
-app.use('/api/maps', mapsController);
-app.use('/api/rentcast', rentcastController);
-
-// Original auth endpoint
+// Auth placeholder
 app.post("/api/auth/signup", async (req, res) => {
     const { username, email, password } = req.body;
     if (!username || !email || !password) {
@@ -63,7 +59,6 @@ app.post("/api/auth/signup", async (req, res) => {
     }
 
     try {
-        // This would be handled by RabbitMQ in the complete implementation
         res.status(200).json({ message: "Signup request sent successfully!" });
     } catch (error) {
         console.error("Signup Error:", error);
@@ -71,19 +66,35 @@ app.post("/api/auth/signup", async (req, res) => {
     }
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'healthy' });
+// Health checks
+app.get('/health', (req, res) => res.status(200).json({ status: 'healthy' }));
+
+app.get('/rabbitmq-health', (req, res) => {
+    const { exec } = require('child_process');
+    exec('rabbitmqctl status', (error, stdout, stderr) => {
+        if (error) {
+            return res.status(500).json({ status: 'unhealthy', message: error.message });
+        }
+        return res.status(200).json({
+            status: 'healthy',
+            message: 'RabbitMQ is running',
+            queues: ['frontend_to_backend', 'rentcast_queue']
+        });
+    });
 });
 
-// Start the server
+// Start server and all services
 app.listen(PORT, () => {
-    console.log(`✅ Server running on http://localhost:${PORT}`);
-    
-    // Start the PHP processes
+    console.log(`✅ Server running at http://localhost:${PORT}`);
+
+    // Start RabbitMQ PHP workers
     startPHPProcess(FRONT_TO_BACK_RECEIVER, "front_to_back_receiver.php");
     startPHPProcess(DB_TO_BE_RECEIVER, "db_to_be_receiver.php");
-    
-    // Start the services
+    startPHPProcess(RENTCAST_RECEIVER, "rentcast_receiver.php");
+    startPHPProcess(PROPERTY_MANAGER_RECEIVER, "property_manager_receiver.php");
+
+
     startServices();
 });
+
+

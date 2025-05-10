@@ -1,5 +1,7 @@
+// ForgotPassword.js
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../AuthContext";
 import "./Auth.css";
 
 const ForgotPassword = () => {
@@ -7,6 +9,8 @@ const ForgotPassword = () => {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  
+  const { forgotPassword } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,34 +19,15 @@ const ForgotPassword = () => {
     setMessageType("");
     
     try {
-      const response = await fetch("/front_to_back_sender.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ 
-          action: "forgotPassword",
-          email 
-        })
-      });
-
-      const data = await response.json();
-
-      if (response.ok || data.status === "success") {
+      const { success, message } = await forgotPassword(email);
+      
+      if (success) {
         setMessageType("success");
         setMessage("Reset link sent! Please check your email and follow the instructions.");
         setEmail(""); // Clear the email field
       } else {
         setMessageType("error");
-        
-        // Handle specific error cases
-        if (data.message && data.message.includes("not found")) {
-          setMessage("Email not found. Please check your email or sign up for an account.");
-        } else if (data.message && data.message.includes("try again")) {
-          setMessage("Too many requests. Please try again later.");
-        } else {
-          setMessage(`Error: ${data.message || "Could not send reset link"}`);
-        }
+        setMessage(message || "Could not send reset link. Please try again.");
       }
     } catch (error) {
       console.error("Error:", error);

@@ -29,30 +29,40 @@ const LandingPage = () => {
     // Set up event listeners for all objects
     Object.entries(objectRoutes).forEach(([objectId, route]) => {
       const object = spline.findObjectById(objectId);
-      if (object) {
+      if (object && typeof object.addEventListener === 'function') {
         object.addEventListener("mouseDown", () => {
           navigate(route);
         });
+      } else {
+        console.log(`Object with ID ${objectId} doesn't support addEventListener or wasn't found`);
       }
     });
   }
 
   return (
-    <div className="landing-container" style={containerStyle}>
-      <Spline 
-        scene="https://prod.spline.design/a3s6JFRdqNflq43Y/scene.splinecode"
-        onLoad={onLoad}
-      />
-      {/* 
-      <header className="landing-header">
-        <h1>Investor IQ</h1>
-        <p>Find, analyze, and save properties with ease.</p>
-        <div className="cta-buttons">
-          <Link to="/signup" className="btn">Sign Up</Link>
-          <Link to="/login" className="btn btn-secondary">Log In</Link>
+    <div className="landing-page">
+      <div className="landing-taskbar">
+        <div className="taskbar-left">
+          <span className="taskbar-logo">InvestorIQ</span>
         </div>
-      </header>
-      */}
+        <div className="taskbar-center">
+          <span className="taskbar-description">Find, analyze, and save properties with ease.</span>
+        </div>
+        <div className="taskbar-right">
+          <Link to="/signup" className="taskbar-button">Sign Up</Link>
+          <Link to="/login" className="taskbar-button">Log In</Link>
+          <a href="/about" className="taskbar-button" target="_blank" rel="noopener noreferrer">About Us</a>
+        </div>
+      </div>
+      
+      <div className="landing-container" style={containerStyle}>
+        <Spline 
+          scene="https://prod.spline.design/a3s6JFRdqNflq43Y/scene.splinecode"
+          onLoad={onLoad}
+        />
+        
+        {/* Content area is intentionally left empty for the Spline scene */}
+      </div>
     </div>
   );
 };

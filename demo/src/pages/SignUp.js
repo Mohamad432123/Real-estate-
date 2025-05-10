@@ -1,5 +1,7 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// SignUp.js
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../AuthContext";
 import SplineBackground from "../components/SplineBackground";
 import "./Auth.css";
 
@@ -10,7 +12,16 @@ const SignUp = () => {
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState(""); // "success" or "error"
     const [isLoading, setIsLoading] = useState(false);
+    
     const navigate = useNavigate();
+    const { signup, user } = useAuth();
+    
+    // Redirect if already logged in
+    useEffect(() => {
+        if (user) {
+            navigate("/dashboard");
+        }
+    }, [user, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -19,22 +30,9 @@ const SignUp = () => {
         setMessageType("");
 
         try {
-            const response = await fetch("/front_to_back_sender.php", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    action: "signup",
-                    name: name,
-                    email: email,
-                    password: password
-                }),
-            });
-
-            const data = await response.json();
+            const { success, message } = await signup(name, email, password);
             
-            if (data.status === "success") {
+            if (success) {
                 setMessageType("success");
                 setMessage("Registration successful! You can now log in to your account.");
                 
@@ -49,22 +47,12 @@ const SignUp = () => {
                 }, 2000);
             } else {
                 setMessageType("error");
-                
-                // Handle specific error messages
-                if (data.message && data.message.includes("already exists")) {
-                    setMessage("This email is already registered. Please use a different email or try logging in.");
-                } else if (data.message && data.message.includes("Invalid email")) {
-                    setMessage("Please enter a valid email address.");
-                } else if (data.message && data.message.includes("Password")) {
-                    setMessage("Password must be at least 8 characters long and include numbers and letters.");
-                } else {
-                    setMessage(`Registration failed: ${data.message || "Unknown error"}`);
-                }
+                setMessage(message || "Registration failed. Please try again.");
             }
         } catch (err) {
-            console.error("Network error:", err);
+            console.error("Signup error:", err);
             setMessageType("error");
-            setMessage("Network error. Please check your connection and try again.");
+            setMessage("An unexpected error occurred. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -110,6 +98,11 @@ const SignUp = () => {
                     {message}
                 </div>
             )}
+            <div className="auth-links">
+                <p>
+                    Already have an account? <Link to="/login">Login</Link>
+                </p>
+            </div>
         </div>
     );
 };

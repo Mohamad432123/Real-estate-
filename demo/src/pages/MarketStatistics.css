@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: #0a0a0a;
+  background: #111111;
   color: #d0d0d0;
 }
 
@@ -11,10 +11,11 @@
   justify-content: space-between;
   align-items: center;
   padding: 15px;
-  background: #1a1a1a;
-  border-bottom: 1px solid #888888;
+  background: rgba(26, 26, 26, 0.7);
+  border-bottom: 1px solid rgba(0, 195, 255, 0.3);
   position: relative;
   z-index: 2;
+  backdrop-filter: blur(5px);
 }
 
 .header-left {
@@ -24,24 +25,26 @@
 
 .market-header h1 {
   margin-left: 20px;
-  text-shadow: 0 0 10px #ffffff;
+  text-shadow: 0 0 10px rgba(0, 195, 255, 0.8), 0 0 20px rgba(0, 195, 255, 0.5);
 }
 
 .back-button {
-  background-color: #888888;
-  border: none;
+  background-color: rgba(0, 195, 255, 0.2);
+  border: 1px solid rgba(0, 195, 255, 0.5);
   border-radius: 5px;
-  color: black;
+  color: white;
   cursor: pointer;
   padding: 10px 20px;
   font-size: 1rem;
-  transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+  transition: all 0.3s ease;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 10px rgba(0, 195, 255, 0.3);
 }
 
 .back-button:hover {
-  background-color: #ffffff;
+  background-color: rgba(0, 195, 255, 0.4);
   transform: scale(1.05);
-  box-shadow: 0px 0px 15px #ffffff;
+  box-shadow: 0 0 15px rgba(0, 195, 255, 0.6);
 }
 
 .market-content {
@@ -67,6 +70,7 @@
   z-index: 1;
   overflow-y: auto;
   max-height: calc(100vh - 60px);
+  background-color: rgba(10, 10, 10, 0.5);
 }
 
 .market-search-container {
@@ -78,27 +82,30 @@
   padding: 10px;
   font-size: 1rem;
   border-radius: 5px;
-  border: 1px solid #888888;
-  background-color: #1a1a1a;
+  border: 1px solid rgba(0, 195, 255, 0.5);
+  background-color: rgba(26, 26, 26, 0.7);
   color: #d0d0d0;
   margin-right: 10px;
+  box-shadow: 0 0 5px rgba(0, 195, 255, 0.3);
 }
 
 .market-search-button {
-  background-color: #000000;
-  border: none;
+  background-color: rgba(0, 195, 255, 0.2);
+  border: 1px solid rgba(0, 195, 255, 0.5);
   border-radius: 5px;
   color: white;
   cursor: pointer;
   padding: 10px 20px;
   font-size: 1rem;
-  transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+  transition: all 0.3s ease;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 10px rgba(0, 195, 255, 0.3);
 }
 
 .market-search-button:hover {
-  background-color: #333333;
+  background-color: rgba(0, 195, 255, 0.4);
   transform: scale(1.05);
-  box-shadow: 0px 0px 15px #ffffff;
+  box-shadow: 0 0 15px rgba(0, 195, 255, 0.6);
 }
 
 .market-stats-grid {
@@ -109,19 +116,22 @@
 }
 
 .stat-card {
-  background-color: #1a1a1a;
+  background-color: rgba(26, 26, 26, 0.7);
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   text-align: center;
+  border: 1px solid rgba(0, 195, 255, 0.3);
+  backdrop-filter: blur(5px);
 }
 
 .stat-card h3 {
   margin-top: 0;
   margin-bottom: 15px;
-  color: #ffffff;
-  border-bottom: 1px solid #333333;
+  color: #00c3ff;
+  border-bottom: 1px solid rgba(0, 195, 255, 0.3);
   padding-bottom: 8px;
+  text-shadow: 0 0 10px rgba(0, 195, 255, 0.5);
 }
 
 .roi-calculator {
@@ -132,17 +142,21 @@
 }
 
 .roi-inputs {
-  background-color: #1a1a1a;
+  background-color: rgba(26, 26, 26, 0.7);
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 195, 255, 0.3);
+  backdrop-filter: blur(5px);
 }
 
 .roi-results {
-  background-color: #1a1a1a;
+  background-color: rgba(26, 26, 26, 0.7);
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 195, 255, 0.3);
+  backdrop-filter: blur(5px);
 }
 
 .input-group {
@@ -159,16 +173,19 @@
   padding: 8px;
   font-size: 1rem;
   border-radius: 5px;
-  border: 1px solid #888888;
-  background-color: #0a0a0a;
+  border: 1px solid rgba(0, 195, 255, 0.5);
+  background-color: rgba(10, 10, 10, 0.7);
   color: #d0d0d0;
+  box-shadow: 0 0 5px rgba(0, 195, 255, 0.3);
 }
 
 .result-card {
-  background-color: #0a0a0a;
+  background-color: rgba(10, 10, 10, 0.7);
   padding: 15px;
   border-radius: 8px;
   margin-bottom: 15px;
+  border: 1px solid rgba(0, 195, 255, 0.2);
+  backdrop-filter: blur(5px);
 }
 
 .result-card:last-child {
@@ -189,12 +206,14 @@
 }
 
 .detailed-calculations {
-  background-color: #1a1a1a;
+  background-color: rgba(26, 26, 26, 0.7);
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   margin-top: 30px;
   margin-bottom: 30px;
+  border: 1px solid rgba(0, 195, 255, 0.3);
+  backdrop-filter: blur(5px);
 }
 
 .calculation-steps {
@@ -204,10 +223,11 @@
 }
 
 .calculation-section {
-  background-color: #0a0a0a;
+  background-color: rgba(10, 10, 10, 0.7);
   padding: 15px;
   border-radius: 8px;
   border-left: 4px solid #4caf50;
+  backdrop-filter: blur(5px);
 }
 
 /* Color-coded calculation sections */
@@ -233,19 +253,23 @@
 
 /* Input value color coding */
 .property-value {
-  color: #2196F3; /* Blue for property values */
+  color: #00c3ff; /* Blue for property values */
+  text-shadow: 0 0 5px rgba(0, 195, 255, 0.5);
 }
 
 .expense-value {
   color: #F44336; /* Red for expense values */
+  text-shadow: 0 0 5px rgba(244, 67, 54, 0.5);
 }
 
 .income-value {
   color: #4CAF50; /* Green for income values */
+  text-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
 }
 
 .calculation-result {
   color: #FFC107; /* Yellow/Gold for calculation results */
+  text-shadow: 0 0 5px rgba(255, 193, 7, 0.5);
 }
 
 .calculation-section h3 {
@@ -274,11 +298,13 @@
 }
 
 .investment-analysis {
-  background-color: #1a1a1a;
+  background-color: rgba(26, 26, 26, 0.7);
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   margin-top: 30px;
+  border: 1px solid rgba(0, 195, 255, 0.3);
+  backdrop-filter: blur(5px);
 }
 
 .analysis-header {

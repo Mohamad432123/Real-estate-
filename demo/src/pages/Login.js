@@ -1,5 +1,7 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// Login.js
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../AuthContext";
 import SplineBackground from "../components/SplineBackground";
 import "./Auth.css";
 
@@ -9,7 +11,16 @@ const Login = () => {
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState(""); // "success" or "error"
     const [isLoading, setIsLoading] = useState(false);
+    
     const navigate = useNavigate();
+    const { login, user } = useAuth();
+    
+    // Redirect if already logged in
+    useEffect(() => {
+        if (user) {
+            navigate("/dashboard");
+        }
+    }, [user, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -18,54 +29,22 @@ const Login = () => {
         setIsLoading(true);
         
         try {
-            const response = await fetch("/front_to_back_sender.php", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    action: "login",
-                    email: email,
-                    password: password
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            if (data.status === "success") {
+            const { success, message } = await login(email, password);
+            
+            if (success) {
                 setMessageType("success");
-                setMessage("Login successful! Redirecting to search page...");
+                setMessage("Login successful! Redirecting to dashboard...");
                 
-                // Store user data in localStorage
-                localStorage.setItem("user", JSON.stringify(data.user));
-                
-                // Redirect to search page after a short delay
-                setTimeout(() => navigate("/search"), 1500);
+                // Redirect to dashboard after a short delay
+                setTimeout(() => navigate("/dashboard"), 1500);
             } else {
                 setMessageType("error");
-                
-                // Provide specific error messages based on the server response
-                if (data.message && data.message.includes("Invalid credentials")) {
-                    setMessage("Invalid email or password. Please try again.");
-                } else if (data.message && data.message.includes("not found")) {
-                    setMessage("Email not registered. Please check your email or sign up for an account.");
-                } else {
-                    setMessage(data.message || "Login failed. Please try again.");
-                }
+                setMessage(message || "Login failed. Please try again.");
             }
         } catch (error) {
             console.error("Login error:", error);
             setMessageType("error");
-            
-            if (error.name === "TypeError" && error.message.includes("NetworkError")) {
-                setMessage("Network error. Please check your connection and try again.");
-            } else if (error.name === "SyntaxError") {
-                setMessage("Server returned invalid data. Please try again later.");
-            } else {
-                setMessage(`Error: ${error.message || "Something went wrong. Please try again."}`);
-            }
+            setMessage("An unexpected error occurred. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -104,10 +83,10 @@ const Login = () => {
             )}
             <div className="auth-links">
                 <p>
-                    Don't have an account? <a href="/signup">Sign Up</a>
+                    Don't have an account? <Link to="/signup">Sign Up</Link>
                 </p>
                 <p>
-                    <a href="/forgot-password">Forgot Password?</a>
+                    <Link to="/forgot-password">Forgot Password?</Link>
                 </p>
             </div>
         </div>

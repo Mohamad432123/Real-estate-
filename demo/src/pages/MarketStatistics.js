@@ -1,13 +1,39 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import Spline from '@splinetool/react-spline';
 import "./MarketStatistics.css";
+
+const API_URL = "http://100.71.100.5:8000/rentcast_sender.php";
+
+const getUserFriendlyErrorMessage = (error) => {
+  const errorMessage = error?.message || '';
+  const errorString = String(errorMessage).toLowerCase();
+  if (errorString.includes('404') && errorString.includes('no data found')) {
+    return "We couldn't find any market data for this location.";
+  }
+  if (errorString.includes('api error') || errorString.includes('rentcast')) {
+    return "There was a problem connecting to the market database.";
+  }
+  if (errorString.includes('timeout')) {
+    return "The search took too long. Please try again.";
+  }
+  if (errorString.includes('connection') || errorString.includes('network')) {
+    return "Network issue. Please check your connection.";
+  }
+  return "Something went wrong. Try again with different search parameters.";
+};
 
 const MarketStatistics = () => {
   const navigate = useNavigate();
+  
+  // Search form state
   const [zipCode, setZipCode] = useState("");
   const [marketData, setMarketData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // ROI calculator state
   const [roiInputs, setRoiInputs] = useState({
     purchasePrice: 0,
     downPayment: 20, // percentage
@@ -19,6 +45,7 @@ const MarketStatistics = () => {
     vacancy: 5, // percentage of rental income
     managementFee: 10, // percentage of rental income
   });
+  
   const [roiResults, setRoiResults] = useState({
     monthlyRentalIncome: 0,
     monthlyCashFlow: 0,
@@ -26,6 +53,26 @@ const MarketStatistics = () => {
     cashOnCashReturn: 0,
     capRate: 0,
   });
+
+  // Handle ROI calculator input changes
+  const handleRoiInputChange = (e) => {
+    const { name, value } = e.target;
+    // Allow empty string for better UX, but convert to 0 for calculations
+    const parsedValue = value === '' ? '' : parseFloat(value);
+    const newInputs = { ...roiInputs, [name]: parsedValue };
+    setRoiInputs(newInputs);
+    
+    if (marketData) {
+      // For calculation, ensure empty strings are converted to 0
+      const calculationInputs = { ...newInputs };
+      Object.keys(calculationInputs).forEach(key => {
+        if (calculationInputs[key] === '') {
+          calculationInputs[key] = 0;
+        }
+      });
+      calculateROI(marketData, calculationInputs);
+    }
+  };
 
   // Fetch market data based on zipcode
   const fetchMarketData = async () => {
@@ -38,42 +85,48 @@ const MarketStatistics = () => {
     setError(null);
 
     try {
-      // Make API call to Rentcast
-      const response = await fetch(
-        `https://api.rentcast.io/v1/markets?zipCode=${zipCode}&dataType=All&historyRange=12`,
-        {
-          headers: {
-            'X-Api-Key': '3d587c5223604e4b874588109b9aea47',
-            'accept': 'application/json'
-          }
+      // Make API call to Rentcast through the PHP sender
+      const response = await axios.post(API_URL, {
+        action: "rentcast_getMarketData",
+        params: {
+          zipCode: zipCode,
+          dataType: "All",
+          historyRange: "12"
         }
-      );
+      });
       
-      if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
+      if (response.data.status !== 'success') {
+        throw new Error(`API request failed: ${response.data.message || 'Unknown error'}`);
       }
       
-      const data = await response.json();
+      const data = response.data.data;
+      
+      if (!data) {
+        throw new Error("No market data available for this zipcode");
+      }
+      
       setMarketData(data);
       
       // Set initial purchase price based on median sale price
-      if (data.saleData && data.saleData.medianPrice) {
+      if (data.data && data.data.medianPrice) {
         setRoiInputs(prev => ({
-          ...prev,
-          purchasePrice: data.saleData.medianPrice
+          ...roiInputs,
+          purchasePrice: data.data.medianPrice || roiInputs.purchasePrice
         }));
-      }
+      }      
       
       // Calculate ROI with the new data
-      calculateROI(data, roiInputs);
+      calculateROI(data, {
+        ...roiInputs,
+        purchasePrice: data.saleData?.medianPrice || roiInputs.purchasePrice
+      });
     } catch (err) {
-      setError("Failed to fetch market data. Please try again.");
+      setError(getUserFriendlyErrorMessage(err));
       console.error("Error fetching market data:", err);
     } finally {
       setLoading(false);
     }
   };
-
   // Calculate ROI based on market data and user inputs
   const calculateROI = (data, inputs) => {
     if (!data || !data.rentalData) return;
@@ -190,26 +243,6 @@ const MarketStatistics = () => {
     });
   };
 
-  // Handle input changes for ROI calculator
-  const handleRoiInputChange = (e) => {
-    const { name, value } = e.target;
-    // Allow empty string for better UX, but convert to 0 for calculations
-    const parsedValue = value === '' ? '' : parseFloat(value);
-    const newInputs = { ...roiInputs, [name]: parsedValue };
-    setRoiInputs(newInputs);
-    
-    if (marketData) {
-      // For calculation, ensure empty strings are converted to 0
-      const calculationInputs = { ...newInputs };
-      Object.keys(calculationInputs).forEach(key => {
-        if (calculationInputs[key] === '') {
-          calculationInputs[key] = 0;
-        }
-      });
-      calculateROI(marketData, calculationInputs);
-    }
-  };
-
   // Format currency values
   const formatCurrency = (value) => {
     // Handle undefined, null, NaN, or invalid values
@@ -234,8 +267,7 @@ const MarketStatistics = () => {
     
     return `${value.toFixed(2)}%`;
   };
-
-  // Determine investment rating based on ROI metrics
+// Determine investment rating based on ROI metrics
   const getInvestmentRating = () => {
     const { cashOnCashReturn, capRate } = roiResults;
     
@@ -300,7 +332,8 @@ const MarketStatistics = () => {
     }
     
     // Market-specific analysis
-    if (marketData) {
+    if (marketData && marketData.saleData && marketData.saleData.medianPrice && 
+        marketData.rentalData && marketData.rentalData.medianRent) {
       const medianPriceToRent = marketData.saleData.medianPrice / (marketData.rentalData.medianRent * 12);
       
       if (medianPriceToRent > 20) {
@@ -341,9 +374,10 @@ const MarketStatistics = () => {
           </button>
         </div>
       </div>
-      
       <div className="market-content">
-        <div className="market-spline"></div>
+        <div className="market-spline">
+          <Spline scene="https://prod.spline.design/NSVcsdfW1SF9VkBv/scene.splinecode" />
+        </div>
         
         <div className="market-data-wrapper">
           
@@ -496,7 +530,6 @@ const MarketStatistics = () => {
                     />
                   </div>
                 </div>
-                
                 <div className="roi-results">
                   <h3>Investment Analysis</h3>
                   
@@ -636,7 +669,6 @@ const MarketStatistics = () => {
                   </div>
                 </div>
               )}
-              
               {/* Detailed Calculation Section */}
               {marketData && roiResults.monthlyRentalIncome > 0 && (
                 <div className="detailed-calculations">
@@ -718,7 +750,6 @@ const MarketStatistics = () => {
                         <p><strong>Annual Cash Flow:</strong> {formatCurrency(roiResults.monthlyCashFlow)} × 12 = {formatCurrency(roiResults.annualCashFlow)}</p>
                       </div>
                     </div>
-
                     <div className="calculation-section">
                       <h3>Return on Investment Metrics</h3>
                       <div className="calculation-step">
